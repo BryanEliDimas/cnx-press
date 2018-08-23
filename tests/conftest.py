@@ -251,7 +251,7 @@ def pretend_logger():
     )
     return logger
 
-
+# bryan
 # ###
 #  Collection Tree models
 # ###
@@ -466,6 +466,7 @@ class _ContentUtil:
         # Write the colxml to the filesystem
         with filepath.open('w') as fb:
             fb.write(self.gen_colxml(metadata, tree))
+# bryan
         collection = self.Collection(id, pathlib.Path(filepath), resources)
 
         return collection, tree, modules
@@ -478,6 +479,7 @@ class _ContentUtil:
         """
         tree = []
         for module in modules:
+            # bryan - DOES THIS EVER GET CALLED?!! I don't ever see anything passing in `modules`
             node = self.make_tree_node_from(module)
             tree.append(node)
         for x in range(2, 6):

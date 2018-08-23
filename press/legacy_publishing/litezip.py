@@ -42,6 +42,7 @@ def publish_litezip(struct, submission, db_conn):
     for module in [x for x in struct if isinstance(x, Module)]:
         metadata = parse_module_metadata(module)
         old_id = module.id
+        # bryan - publishing pages! (aka. modules)
         (id, version), ident = publish_legacy_page(module, metadata,
                                                    submission, db_conn)
         id_map[old_id] = (id, version)
@@ -62,6 +63,7 @@ def publish_litezip(struct, submission, db_conn):
     # Publish the Collection.
     metadata = parse_collection_metadata(collection)
     old_id = collection.id
+    # bryan - publishing books!
     (id, version), ident = publish_legacy_book(collection, metadata,
                                                submission, db_conn)
     id_map[old_id] = (id, version)
