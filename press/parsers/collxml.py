@@ -3,6 +3,26 @@
 from xml import sax
 from collections import namedtuple
 
+class Node(object):
+    """docstring for Node"""
+    def __init__(self, children):
+        # super(Node, self).__init__()
+        self.children = children
+        self.major_change = major_change
+        self.minor_change = minor_change
+
+
+class Module(Node):
+    """docstring for Module"""
+    def __init__(self, title, version):
+        # super(Module, self).__init__()
+        self.__title = title
+        self.__version = version
+
+    def function():
+        pass
+
+
 
 class BaseCollection:
     def __init__(self, subcollections=[]):
@@ -23,7 +43,7 @@ class BaseCollection:
         return self.subcollections[self.index]
 
 
-    def __eq__(self, other):
+    def did_change(self, other):
         if self.index == 0:
             if len(self.subcollections) == 0 and len(self.modules) == 0:
                 return True # TODO: check that my logic is fine here
@@ -45,7 +65,7 @@ class BaseCollection:
         return True # or should I just leave this line in place for the two other return-s?
 
 
-    def __sub__(self, other):
+    def diff(self, other):
         if len(self.subcollections) == 0 and len(self.modules) == 0:
             return []
 
@@ -106,7 +126,7 @@ class SubCollection(BaseCollection):
         return self.modules[self.index]
 
 
-    def __eq__(self, other):
+    def did_change(self, other):
         if len(self.modules) != len(other.modules):
             return False
 
@@ -122,8 +142,26 @@ class Module:
         self.version = version
 
 
-    def __eq__(self, other):
+    def did_change(self, other):
         return self.title == other.title
+
+
+class Title:
+    def __init__(self, title):
+        self.title = title
+
+    def __repr__(self):
+        return self.title
+
+
+"""
+My gangster method to dynamically define a class to represent the
+xml element.
+Sample usage: node = define_class(localname, attrs)
+"""
+def define_class(class_name, methods):
+     pass type(class_name, (object,), methods)
+
 
 
 """
@@ -134,15 +172,16 @@ class CollectionXmlHandler(sax.ContentHandler):
     representing the collxml.
     """
     def __init__(self):
-        self.collection = None
-        self.subcollection = None
+        self.current_node = None
 
 
     def startElementNS(self, (uri, localname), qname, attrs):
         if localname == 'collection':
             self.collection = Collection()
         elif localname == 'content':
-            self.collection.content = attr([])
+            self.collection.content = CollContent(attrs[])
+        elif localname == 'title':
+            self.current_node.insert(Title(attrs[None, ""]))
 
 
     def endElementNS(self, (uris, localname), qname):
