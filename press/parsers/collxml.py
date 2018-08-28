@@ -2,7 +2,6 @@
 
 from xml import sax
 from collections import namedtuple
-import inspect
 
 
 def find_differences_in_collections(collection_tree):
@@ -23,10 +22,11 @@ class NodeBase(object):
     """Represents a collxml element parsed from a Collection xml file.
     It is iterable and it is comparable using `is_equal_to`.
     """
-    def __init__(self, name):
+    def __init__(self, name, attrs):
         self.name = name
         self.__children = []
         self.__index = 0
+        self.__attrs = attrs
 
 
     def __len__(self):
@@ -48,11 +48,6 @@ class NodeBase(object):
         if len(temp) > 0:
             return temp
 
-        # child = self.__children[self.__index]
-        # if len(child) > 0:
-        #     return temp.extend()
-
-
         child = self.__children[self.__index]
         grandchildren = [grandchild for grandchild in child]
         if len(grandchildren) > 0:
@@ -64,67 +59,16 @@ class NodeBase(object):
         return self.__children[self.__index - 1]
 
 
-"""
-    def __next__(self):
-        grandchildren = []
-
-        for node in self.__children:
-            if len(node.__children) >= 1: # has a subtree?
-                grandchildren.extend(node.__children)
-
-        # if has a subtree?
-        node_with_subtree = self.__children[self.__index]
-        for subtree in node_with_subtree.__children:
-            # iterate through each node of the subtree
-            for i, node in enumerate(subtree):
-                grandchildren[i].insert(node)
-        # else
-        for node in self.__children:
-            # simply return the node at current index
-            return self.__children[self.__index]
-
-
-    def has_subtree(self):
-        for node in self.__children:
-            if len(node.__children) > 0:
-                return True
-            return False
-
-
-    def __next__(self):
-        if self.__index == len(subcollections):
-            raise StopIteration
-
-        self.__index += 1
-        return self.__children[self.__index - 1]
-"""
-
-
-    # BRYAN - `in` does equality checking though.
-    #       consider defining __hash__
-    # SO I DON'T THINK THIS WILL WORK.
-    # def __contains__(self, node):
-    #     if node in self.__children:
-    #         return True
-
-    #     for subtree in self.__children:
-    #         if node in subtree:
-    #             return True
-
-    #     return False
-
-
-    # def is_root(self):
-    #     return len(self.children) == 0 # wrong. this means leaf.
-
+    # def next(self): # for backward compatibility with Python 2
+    #     return self.__next__()
 
     def is_equal_to(self, other):
-        if not _same_element_name(other) or not _same_number_of_children(other):
+        if not self._same_element_name(other) or not self._same_number_of_children(other):
             return False
 
-        if _both_have_title(other) and not _same_title(other):
+        if self._both_have_title(other) and not self._same_title(other):
             return False
-        elif xor_title(other):
+        elif self._xor_title(other):
             return False
 
         for i, node in enumerate(other):
@@ -153,7 +97,7 @@ class NodeBase(object):
         return getattr(self, 'title') == getattr(other, 'title')
 
 
-    def xor_title(self, other):
+    def _xor_title(self, other):
         """Returns true if only one of [them] has a title attribute.
         """
         return hasattr(self, 'title') ^ hasattr(other, 'title')
@@ -166,7 +110,16 @@ class NodeBase(object):
 
     # collxml element attributes - maybe a diff class should impl. this
     def element_attributes(self):
+        import inspect
         return inspect.getmembers(self, predicate=inspect.ismethod) # array?
+
+
+    def define_attrs_from_dict(self, attrs):
+        """This method defines attributes on instance from a passed-in
+        dictionary on instantiation.
+        """
+        for k, v in self.__attrs:
+            setattr(k, v)
 
 
 """
@@ -176,51 +129,75 @@ class CollectionXmlHandler(sax.ContentHandler):
     """SAX parser for collxml, outputs a tree of objects
     representing the collxml.
     """
-    def __init__(self):
-        self.current_node = []
+    def __init__(self, tree_root):
+        self.current_node = tree_root
+        # self.current_node.element_attributes()
 
 
-    def endElementNS(self, (uri, localname), qname):
-        node = self._create_node(localname)
-        self.current_node.insert(node)
-
-        if localname == 'module':
-            pass
-
-
-    def startElementNS(self, (uris, localname), qname):
-        pass
+    def startElementNS(self, name, qname, attrs):
+        uri, localname = name
+        new_node = self._create_node(localname, self.not_ns_attrs(attrs))
+        import pdb; pdb.set_trace()
+        self.current_node.insert(new_node)
+        self.current_node = new_node
 
 
-    def _create_node(name, attrs):
-        return type(name, (NodeBase,), attrs)
+    # def endElementNS(self, name, qname):
+    #     uri, localname = name
+    #     node = self._create_node(localname)
+    #     self.current_node.insert(node)
 
 
-    def _create_tuple_node(name, attrs): # experiment
-        Node = namedtuple(name, string(attrs.keys()))
-        return Node(string(attrs.values()))
+    def _create_node(self, name, attrs):
+        Node = type('Node', (NodeBase,), attrs)
+        return Node(name)
+
+
+    def not_ns_attrs(self, attrs):
+        """By default, attrs are namespaced. This func removes namespacing.
+        """
+        return {nsk[1]: v for nsk, v in dict(attrs).items()}
+
+
+    # def _create_tuple_node(name, attrs): # experiment
+    #     Node = namedtuple(name, string(attrs.keys()))
+    #     return Node(string(attrs.values()))
 
 
 
-def parse_collxml(input_collxml):
+def parse_collxml(input_collxml, tree_root):
     """
     input_collxml should be a filename or a file object
     """
     parser = sax.make_parser()
-    parser.setFeature(sax.handler.feature_namespaces, 0)
-    parser.setContentHandler(CollectionXmlHandler())
+    parser.setFeature(sax.handler.feature_namespaces, 1)
+    parser.setContentHandler(CollectionXmlHandler(tree_root))
 
     parser.parse(input_collxml)
 
 
 def test_parser():
-    pass
+    tree_root1 = NodeBase('root')
+    tree_root2 = NodeBase('root')
 
-mod1 = Module('title1', '1.0')
-mod2 = Module('title1', '1.0')
-mods = [mod1, mod2]
-subcol1 = [SubCollection(mods)]
-subcol2 = [SubCollection(mods)]
-subcols = [subcol1, subcol2]
-col1 = Collection(subcols)
-col2 = Collection(subcols)
+    with open('collection.xml', 'rb') as f:
+        parse_collxml(f, tree_root1)
+
+    with open('collection.xml', 'rb') as f:
+        parse_collxml(f, tree_root2)
+
+
+    assert tree_root1.is_equal_to(tree_root2)
+
+
+test_parser()
+
+
+# mod1 = Module('title1', '1.0')
+# mod2 = Module('title1', '1.0')
+# mods = [mod1, mod2]
+# subcol1 = [SubCollection(mods)]
+# subcol2 = [SubCollection(mods)]
+# subcols = [subcol1, subcol2]
+# col1 = Collection(subcols)
+# col2 = Collection(subcols)
