@@ -1,5 +1,5 @@
 from xml import sax
-from press.models import CollectionMetadata, CollectionElement
+from press.models import CollectionMetadata, PressElement
 from .common import make_cnx_xpath, make_elm_tree, parse_common_properties
 
 
@@ -33,7 +33,9 @@ class CollectionXmlHandler(sax.ContentHandler):
 
     def startElementNS(self, name, qname, attrs):
         uri, localname = name
-        self.next_node = CollectionElement(localname, self._attrs_hash(attrs))
+        # TODO: pass in the URI and have the model map it to a namespace.
+        self.next_node = PressElement(localname,
+                                      self._attrs_no_uri(attrs))
         self.current_node.add_child(self.next_node)
         self.current_node = self.next_node
 
@@ -43,8 +45,9 @@ class CollectionXmlHandler(sax.ContentHandler):
     def endElementNS(self, name, qname):
         self.current_node = self.current_node.parent
 
-    def _attrs_hash(self, attrs):
-        return {name: v for (uri, name), v in attrs.items()}
+    def _attrs_no_uri(self, attrs):
+        return {name: value for (uri, name), value in attrs.items()}
+
 
 def parse_collxml(input_collxml):
     """
@@ -52,7 +55,7 @@ def parse_collxml(input_collxml):
     where collections and sub-collections (both branching points) contain
     subcollections and modules (leaf nodes).
     """
-    tree_root = CollectionElement('collxml', {})
+    tree_root = PressElement('collxml', {})
 
     parser = sax.make_parser()
     parser.setFeature(sax.handler.feature_namespaces, 1)

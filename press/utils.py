@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 __all__ = (
     'convert_to_legacy_domain',
     'convert_version_tuple_to_version_string',
@@ -6,11 +8,18 @@ __all__ = (
 )
 
 
+def diff_collxml(first, second):
+    Diff = namedtuple('Diff', ('added, removed'))
+    added = set(second.iter()) - set(first.iter())
+    removed = set(first.iter()) - set(second.iter())
+    return Diff(added=added, removed=removed)
+
+
 def requires_major_version_update(before, after):
     """Tests whether or not a collection changed.
     If one did, it requires a major version update and True will be returned.
     """
-    for tree_before, tree_after in zip(before.traverse(), after.traverse()):
+    for tree_before, tree_after in zip(before.iter(), after.iter()):
         if not tree_before.is_equal_to(tree_after):
             return True
     return False

@@ -5,20 +5,22 @@ from litezip.main import COLLECTION_NSMAP
 from lxml import etree
 
 from press.parsers import parse_collection_metadata, parse_collxml
-from press.models import CollectionElement
+from press.models import PressElement, ComparablePressElement
 
 
 def test_parse_collxml(collxml_templates):
     with (collxml_templates / 'original.xml').open() as origin:
-        expected = parse_collxml(origin)
+        expected = tree = parse_collxml(origin)
 
-    assert isinstance(expected, CollectionElement)
+    assert set(tree.iter()) == set(tree.iter())
+    assert len(set(tree.iter())) == 83
+
+    assert isinstance(expected, PressElement)
     assert expected.tag == 'collxml'
 
 
 def test_markup_in_title_gets_parsed(collxml_templates):
-    """Modules with markup in title gets parsed as part of the title.
-    """
+    # Modules with markup in `title` gets parsed as part of the title.
     titles_with_markup = [
         'Introduction to SOME MATH Quartus and Circuit Diagram Design',
         'Lab 1-1: 4-Bit Mux and SOME STYLED TEXT all NAND/NOR Mux',
@@ -30,7 +32,7 @@ def test_markup_in_title_gets_parsed(collxml_templates):
         tree = parse_collxml(doc)
 
     for title in titles_with_markup:
-        assert title in [node._complete_title() for node in tree.traverse()
+        assert title in [node._complete_title() for node in tree.iter()
                          if node.tag == 'title']
 
 

@@ -1,8 +1,10 @@
+from press.models import PressElement, ComparablePressElement
 from press.parsers import parse_collxml
 from press.utils import (
     convert_to_legacy_domain,
     convert_version_to_legacy_version,
     requires_major_version_update,
+    diff_collxml,
 )
 
 
@@ -10,8 +12,49 @@ def test_major_version_checker(collxml_templates):
     """No changes in collxml should NOT require a major version update.
     """
     with (collxml_templates / 'original.xml').open('r') as file:
-        tree = parse_collxml(file)
-    assert requires_major_version_update(tree, tree) is False
+        tree = sametree = parse_collxml(file)
+    assert requires_major_version_update(tree, sametree) is False
+
+
+def test_diffying_with_set_operations_works(collxml_templates):
+    """No changes in collxml returns an empty set.
+    """
+    with (collxml_templates / 'original.xml').open('r') as file:
+        tree = sametree = parse_collxml(file)
+
+    assert set(tree.iter()) - set(sametree.iter()) == set()
+
+
+def test_diffying_collxml_with_additional_modules(collxml_templates):
+    """Diffying returns sets of PressElement objects for added & removed.
+    """
+    with (collxml_templates / 'original.xml').open('r') as doc1, \
+         (collxml_templates / 'extra_module.xml').open('r') as doc2:
+        tree1 = parse_collxml(doc1)
+        tree2 = parse_collxml(doc2)
+
+    diff = diff_collxml(ComparablePressElement(tree1), ComparablePressElement(tree2))
+
+    added1 = PressElement('title', {})
+    added1.text = 'AN ADDITIONAL MODULE'
+
+    # Note: `extra_module.xml` also contains a renamed (title --> TITLE) tag
+    added2 = PressElement('TITLE', {})
+    added2.text = 'A Student to Student Intro to'
+    added2.tail = 'Programming and CCS4'
+
+    # Aforementioned TITLE tag also contains a nested `<code>` tag.
+    added3 = PressElement('code', {})
+    added3.text = 'IDE'
+
+    removed1 = PressElement('title', {})
+    removed1.text = 'A Student to Student Intro to IDE Programming and CCS4'
+
+    expected_removed = {removed1}
+    expected_added = {added1, added2, added3}
+
+    assert expected_removed == diff.removed
+    assert expected_added == diff.added
 
 
 def test_a_change_in_title_req_major_change(collxml_templates):
