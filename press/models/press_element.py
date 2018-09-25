@@ -13,18 +13,16 @@ class PressElement:
     def __repr__(self):
         """Represents a tag as it would appear in the source collxml file,
         with the exception that this also includes the trailing text (`tail`)
-        prepended with `...` (elipsis).
+        prepended with `...` (ellipsis).
         """
         text = self.text or ''
         tail = self.tail and '...{}'.format(self.tail) or ''
-        return '<{tag}>{text}{tail}</{tag}>\n'.format(tag=self.tag, text=text,
-                                                    tail=tail)
+        return '<%s>%s</%s>' % (self.tag, text + tail, self.tag)
 
     def __str__(self):
         text = self.text or ''
         tail = self.tail and '...{}'.format(self.tail) or ''
-        return '<{tag}>{text}{tail}</{tag}>\n'.format(tag=self.tag, text=text,
-                                                    tail=tail)
+        return '<%s>%s</%s>' % (self.tag, text + tail, self.tag)
 
     def __iter__(self):
         return iter(self.__children)
@@ -91,11 +89,10 @@ class PressElement:
         return title_as_string
 
 
-class ComparablePressElement(PressElement):
+class ComparablePressElement:
     """Class for detecting changes in XML documents.
     """
     def __init__(self, elem):
-        super().__init__(elem.tag, **elem.attrib)
         self.elem = elem
 
     def __hash__(self):
@@ -108,4 +105,11 @@ class ComparablePressElement(PressElement):
             elem.tail == other.tail
 
     def __iter__(self):
-        return iter(self.elem)
+        return iter(ComparablePressElement(e) for e in self.elem.iter())
+
+    def iter(self):
+        return iter(ComparablePressElement(e) for e in self.elem.iter())
+
+    # Delegate all other attributes to elem
+    def __getattr__(self, name):
+        return self.elem.__dict__[name]

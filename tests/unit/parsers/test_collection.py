@@ -5,18 +5,16 @@ from litezip.main import COLLECTION_NSMAP
 from lxml import etree
 
 from press.parsers import parse_collection_metadata, parse_collxml
-from press.models import PressElement, ComparablePressElement
+from press.models import PressElement
 
 
 def test_parse_collxml(collxml_templates):
     with (collxml_templates / 'original.xml').open() as origin:
-        expected = tree = parse_collxml(origin)
+        tree = parse_collxml(origin)
 
-    assert set(tree.iter()) == set(tree.iter())
     assert len(set(tree.iter())) == 83
-
-    assert isinstance(expected, PressElement)
-    assert expected.tag == 'collxml'
+    assert isinstance(tree, PressElement)
+    assert tree.tag == 'collxml'
 
 
 def test_markup_in_title_gets_parsed(collxml_templates):

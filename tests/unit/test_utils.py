@@ -1,4 +1,4 @@
-from press.models import PressElement, ComparablePressElement
+from press.models import PressElement, ComparablePressElement as Comparable
 from press.parsers import parse_collxml
 from press.utils import (
     convert_to_legacy_domain,
@@ -16,15 +16,6 @@ def test_major_version_checker(collxml_templates):
     assert requires_major_version_update(tree, sametree) is False
 
 
-def test_diffying_with_set_operations_works(collxml_templates):
-    """No changes in collxml returns an empty set.
-    """
-    with (collxml_templates / 'original.xml').open('r') as file:
-        tree = sametree = parse_collxml(file)
-
-    assert set(tree.iter()) - set(sametree.iter()) == set()
-
-
 def test_diffying_collxml_with_additional_modules(collxml_templates):
     """Diffying returns sets of PressElement objects for added & removed.
     """
@@ -33,7 +24,7 @@ def test_diffying_collxml_with_additional_modules(collxml_templates):
         tree1 = parse_collxml(doc1)
         tree2 = parse_collxml(doc2)
 
-    diff = diff_collxml(ComparablePressElement(tree1), ComparablePressElement(tree2))
+    diff = diff_collxml(tree1, tree2)
 
     added1 = PressElement('title', {})
     added1.text = 'AN ADDITIONAL MODULE'
@@ -50,8 +41,9 @@ def test_diffying_collxml_with_additional_modules(collxml_templates):
     removed1 = PressElement('title', {})
     removed1.text = 'A Student to Student Intro to IDE Programming and CCS4'
 
-    expected_removed = {removed1}
-    expected_added = {added1, added2, added3}
+    expected_removed = set((Comparable(removed1)))
+    expected_added = set((Comparable(added1), Comparable(added2),
+                          Comparable(added3)))
 
     assert expected_removed == diff.removed
     assert expected_added == diff.added
