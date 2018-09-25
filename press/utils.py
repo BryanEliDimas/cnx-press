@@ -1,5 +1,7 @@
 from collections import namedtuple
 
+from press.models import ComparablePressElement
+
 __all__ = (
     'convert_to_legacy_domain',
     'convert_version_tuple_to_version_string',
@@ -8,10 +10,10 @@ __all__ = (
 )
 
 
-def diff_collxml(first, second):
+def diff_collxml(pre, post):
     Diff = namedtuple('Diff', ('added, removed'))
-    added = set(second.iter()) - set(first.iter())
-    removed = set(first.iter()) - set(second.iter())
+    added = set(post.iter()) - set(pre.iter())
+    removed = set(pre.iter()) - set(post.iter())
     return Diff(added=added, removed=removed)
 
 

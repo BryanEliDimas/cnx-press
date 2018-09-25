@@ -13,18 +13,16 @@ class PressElement:
     def __repr__(self):
         """Represents a tag as it would appear in the source collxml file,
         with the exception that this also includes the trailing text (`tail`)
-        prepended with `...` (elipsis).
+        prepended with `...` (ellipsis).
         """
         text = self.text or ''
         tail = self.tail and '...{}'.format(self.tail) or ''
-        return '<{tag}>{text}{tail}</{tag}>\n'.format(tag=self.tag, text=text,
-                                                    tail=tail)
+        return '<%s>%s</%s>' % (self.tag, text + tail, self.tag)
 
     def __str__(self):
         text = self.text or ''
         tail = self.tail and '...{}'.format(self.tail) or ''
-        return '<{tag}>{text}{tail}</{tag}>\n'.format(tag=self.tag, text=text,
-                                                    tail=tail)
+        return '<%s>%s</%s>' % (self.tag, text + tail, self.tag)
 
     def __iter__(self):
         return iter(self.__children)
@@ -51,21 +49,6 @@ class PressElement:
     def getparent(self):
         return self.parent
 
-    def is_equal_to(self, other):
-        """Equality is defined as two collections having the same
-        type of tag in the same order and all modules having the same title.
-        """
-        if self.tag == 'title' and other.tag == 'title':
-            """title tags may have nested tags within them,
-            so consider the text in those as well for comparison.
-            """
-            for this, other in zip(self.itertext(), other.itertext()):
-                if this != other:
-                    return False
-                return True
-        else:
-            return self.tag == other.tag  # NOTE: ignores attributes
-
     def insert_text(self, content):
         content = content.strip()
         if self.text and content:  # if already has text, it's a tail.
@@ -90,13 +73,30 @@ class PressElement:
         title_as_string = ' '.join(text + [self.tail or '']).strip()
         return title_as_string
 
+    def is_equal_to(self, other):
+        """Equality is defined as two collections having the same
+        type of tag in the same order and all modules having the same title.
+        """
+        if self.tag == 'title' and other.tag == 'title':
+            """title tags may have nested tags within them,
+            so consider the text in those as well for comparison.
+            """
+            for this, other in zip(self.itertext(), other.itertext()):
+                if this != other:
+                    return False
+                return True
+        else:
+            return self.tag == other.tag  # NOTE: ignores attributes
 
-class ComparablePressElement(PressElement):
+
+class ComparablePressElement:
     """Class for detecting changes in XML documents.
     """
     def __init__(self, elem):
-        super().__init__(elem.tag, **elem.attrib)
         self.elem = elem
+
+    def __repr__(self):
+        return self.elem.__repr__()
 
     def __hash__(self):
         elem = self.elem
@@ -108,4 +108,11 @@ class ComparablePressElement(PressElement):
             elem.tail == other.tail
 
     def __iter__(self):
-        return iter(self.elem)
+        return iter(ComparablePressElement(e) for e in self.elem.iter())
+
+    def iter(self):
+        return iter(ComparablePressElement(e) for e in self.elem.iter())
+
+    # Delegate all other attributes to elem
+    def __getattr__(self, name):
+        return self.elem.__dict__[name]
