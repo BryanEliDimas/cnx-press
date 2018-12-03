@@ -33,6 +33,7 @@ class CollectionXmlHandler(sax.ContentHandler):
 
     def startElementNS(self, name, qname, attrs):
         uri, localname = name
+
         # TODO: pass in the URI and have the model map it to a namespace.
         self.next_node = PressElement(localname,
                                       self._attrs_no_uri(attrs))
@@ -40,7 +41,15 @@ class CollectionXmlHandler(sax.ContentHandler):
         self.current_node = self.next_node
 
     def characters(self, content):
-        self.current_node.insert_text(content)
+        # We have to create a new node so that the __hash__() gets called again
+        new_node = self.current_node.insert_text(content)
+        new_node.parent = self.current_node.parent
+        new_node.children = self.current_node.children
+        # AND the parent needs to contain the new child element for the old one
+        self.current_node.parent.children.pop()
+        self.current_node.parent.children.append(new_node)
+        # And finally:
+        self.current_node = new_node
 
     def endElementNS(self, name, qname):
         self.current_node = self.current_node.parent
@@ -55,7 +64,7 @@ def parse_collxml(input_collxml):
     where collections and sub-collections (both branching points) contain
     subcollections and modules (leaf nodes).
     """
-    tree_root = PressElement('collxml', {})
+    tree_root = PressElement('root')
 
     parser = sax.make_parser()
     parser.setFeature(sax.handler.feature_namespaces, 1)

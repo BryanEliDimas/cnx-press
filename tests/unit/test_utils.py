@@ -1,4 +1,4 @@
-from press.models import PressElement, ComparablePressElement as Comparable
+from press.models import PressElement
 from press.parsers import parse_collxml
 from press.utils import (
     convert_to_legacy_domain,
@@ -24,29 +24,32 @@ def test_diffying_collxml_with_additional_modules(collxml_templates):
         tree1 = parse_collxml(doc1)
         tree2 = parse_collxml(doc2)
 
-    diff = diff_collxml(Comparable(tree1), Comparable(tree2))
+    # import pdb; pdb.set_trace()
+    # res = set(tree2.iter()) - set(tree1.iter())
+    # res = set(tree1.iter()) - set(tree2.iter())
+    # len(set(tree2.iter()))
 
-    added1 = PressElement('title', {})
-    added1.text = 'AN ADDITIONAL MODULE'
+    diff = diff_collxml(tree1, tree2)
+
+    removed1 = PressElement('title',
+                            text='A Student to Student Intro to IDE'
+                            ' Programming and CCS4')
+
+    added1 = PressElement('title', text='AN ADDITIONAL MODULE')
 
     # Note: `extra_module.xml` also contains a renamed (title --> TITLE) tag
-    added2 = PressElement('TITLE', {})
-    added2.text = 'A Student to Student Intro to'
-    added2.tail = 'Programming and CCS4'
+    added2 = PressElement('TITLE', text='A Student to Student Intro to',
+                          tail='Programming and CCS4')
 
     # Aforementioned TITLE tag also contains a nested `<code>` tag.
-    added3 = PressElement('code', {})
-    added3.text = 'IDE'
+    added3 = PressElement('code', text='IDE')
 
-    removed1 = PressElement('title', {})
-    removed1.text = 'A Student to Student Intro to IDE Programming and CCS4'
+    expected_added = (added1, added2, added3)
 
-    expected_removed = set((Comparable(removed1)))
-    expected_added = set((Comparable(added1), Comparable(added2),
-                          Comparable(added3)))
+    assert removed1 in diff.removed
 
-    assert expected_removed == diff.removed
-    assert diff.added == expected_added
+    for added in expected_added:
+        assert added in diff.added
 
 
 def test_a_change_in_title_req_major_change(collxml_templates):

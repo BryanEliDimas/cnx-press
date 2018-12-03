@@ -1,10 +1,9 @@
 from collections import namedtuple
 
-from .press_element import PressElement, ComparablePressElement
+from .press_element import PressElement
 
 
-__all__ = ('CollectionMetadata', 'ModuleMetadata', 'Resource', 'PressElement',
-           'ComparablePressElement')
+__all__ = ('CollectionMetadata', 'ModuleMetadata', 'Resource', 'PressElement')
 
 
 CollectionMetadata = namedtuple(

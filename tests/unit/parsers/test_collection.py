@@ -30,7 +30,7 @@ def test_markup_in_title_gets_parsed(collxml_templates):
         tree = parse_collxml(doc)
 
     for title in titles_with_markup:
-        assert title in [node._complete_title() for node in tree.iter()
+        assert title in [node.complete_title() for node in tree.iter()
                          if node.tag == 'title']
 
 
