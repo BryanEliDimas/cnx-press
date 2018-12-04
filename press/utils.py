@@ -12,7 +12,7 @@ def diff_collxml(pre, post):
     Diff = namedtuple('Diff', ('added, removed'))
     removed = set(pre.iter()) - set(post.iter())
     added = set(post.iter()) - set(pre.iter())
-    return Diff(added=tuple(added), removed=tuple(removed))
+    return Diff(added=added, removed=removed)
 
 
 def requires_major_version_update(before, after):
@@ -20,7 +20,7 @@ def requires_major_version_update(before, after):
     If one did, it requires a major version update and True will be returned.
     """
     for tree_before, tree_after in zip(before.iter(), after.iter()):
-        if not tree_before.is_equal_to(tree_after):
+        if not tree_before.requires_major_version_update(tree_after):
             return True
     return False
 

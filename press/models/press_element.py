@@ -56,10 +56,6 @@ class PressElement:
         """Works like append for XML ElementTree-s."""
         child.parent = self
         self.children.append(child)
-        # return self
-
-    def getparent(self):
-        return self.parent
 
     def insert_text(self, content):
         content = content.strip()
@@ -70,9 +66,6 @@ class PressElement:
             return PressElement(self.tag, attrs=self.attrs, text=content)
 
     def itertext(self):
-        tag = self.tag
-        if not isinstance(tag, str) and tag is not None:
-            return
         if self.text:
             yield self.text
         for e in self:
@@ -86,9 +79,10 @@ class PressElement:
         title_as_string = ' '.join(text + [self.tail or '']).strip()
         return title_as_string
 
-    def is_equal_to_tree(self, other):
-        """Equality is defined as two collections having the same
-        type of tag in the same order and all modules having the same title.
+    def requires_major_version_update(self, other):
+        """Answers the questions:
+        - Has the order of any of the modules changed?
+        - Did the title of any of the modules change?
         """
         if self.tag == 'title' and other.tag == 'title':
             """title tags may have nested tags within them,
@@ -100,5 +94,5 @@ class PressElement:
                 return True
         else:
             # NOTE: Ignores attributes.
-            #       Just make sure that it's the same kinda tag.
+            #       Just make sure that it's the same type tag.
             return self.tag == other.tag

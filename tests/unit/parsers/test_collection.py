@@ -11,10 +11,9 @@ from press.models import PressElement
 def test_parse_collxml(collxml_templates):
     with (collxml_templates / 'original.xml').open() as origin:
         tree = parse_collxml(origin)
-
-    assert len(set(tree.iter())) == 83
+    assert len(tuple(tree.iter())) == 83
     assert isinstance(tree, PressElement)
-    assert tree.tag == 'collxml'
+    assert tree.tag == 'root'
 
 
 def test_markup_in_title_gets_parsed(collxml_templates):
