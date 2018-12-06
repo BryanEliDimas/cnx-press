@@ -43,7 +43,8 @@ class CollectionXmlHandler(sax.ContentHandler):
     def characters(self, content):
         # We have to create a new node so that the __hash__() is re-calculated
         new_node = self.current_node.insert_text(content)
-        new_node.parent = self.current_node.parent
+        # new_node.parent = self.current_node.parent # BRYAN - WAIT..
+        new_node.parent = self.current_node # IS THIS CORRECT?
         new_node.children = self.current_node.children
         # AND the parent needs to contain the new child element for the old one
         self.current_node.parent.children.pop()

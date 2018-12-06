@@ -1,3 +1,108 @@
+
+dtree = {
+    '#collection': [
+        {
+            '#metadata': [
+                {'#content-id': 'col11405'},
+                {'#title': 'Intro to Computational Engineering'},
+                {'#version': '1.2'},
+            ]
+        },
+        {
+            '#content': [
+                {
+                    '#module': [
+                        {
+                            '@document': 'm42303',
+                            '@version': 'latest',
+                            '@repository': 'http://cnx.org/content',
+                            '@version-at-this-collection-version': '1.1'
+                        },
+                        {
+                            '#title': 'Introduction to Quartus.....',
+                        }
+                    ]
+                },
+                {
+                    '#module': [
+                        {
+                            '@document': 'm42304',
+                            '@version': 'latest',
+                            '@repository': 'http://cnx.org/content',
+                            '@version-at-this-collection-version': '1.3'
+                        },
+                        {
+                            '#title': 'Chapter 1.....',
+                        }
+                    ]
+                },
+            ]
+        }
+    ]
+}
+
+
+
+
+# class PressTag():
+#     """docstring for PressTag"""
+#     def __init__(self, name):
+#         self.name = name
+#         self.attrs = {}
+
+#     def insert_attr(self, attr, val):
+#         self.attrs[attr] = val
+
+#     def iter(self):
+#         yield self
+#         # import pdb; pdb.set_trace()
+
+#         if isinstance(tuple(self)[0], tuple):
+#             return
+
+#         for nested in self:
+#             yield from nested.iter()
+
+
+
+# class PressTree():
+#     """bcus trees should behave different than elements"""
+#     def __init__(self, dtree):
+#         self.root_tag = PressTag('root')
+#         self.current_tag = None
+#         self.dtree = dtree
+
+#     def from_dict(dtree):
+#         res
+
+
+#     def dict_to_tree(self):
+#         import pdb; pdb.set_trace()
+#         # dtree must be a dictionary always
+#         for items_tuple in self.dtree.items():
+#             # the second item in items_tuple could be a list or a dict
+#             if isinstance(items_tuple[1], list):
+#                 for deep_item in items_tuple[1]:
+#                     yield from self.dict_to_tree(items_tuple[1])
+#             elif isinstance(items_tuple[1], dict):
+#                 yield from self.dict_to_tree(items_tuple[1])
+#             elif items_tuple[0].startswith('#'):
+#                 if self.current_tag is not None:
+#                     new_tag = PressTag(items_tuple[0].strip('#'))
+#                     new_tag.parent = self.current_tag
+#                     self.current_tag.children.append(new_tag)
+#                 else:
+#                     self.current_tag = self.root_tag
+#                     # self.current_tag.parent = SOMETHING
+#             elif items_tuple[0].startswith('@'):
+#                 self.current_tag.insert_attr(items_tuple[1].strip('@'))
+#             else:
+#                 return False
+#         return self.root_tag
+
+# tree = PressTree().new_from_dict({'#cool': 'yes'})
+# tree = PressTree({'#cool': 'yes'}).dict_to_tree()
+
 class PressElement:
     """Represents a collxml element parsed from a Collection XML file.
     It is iterable and it is comparable using `is_equal_to`.
@@ -97,3 +202,69 @@ class PressElement:
             # NOTE: Ignores attributes.
             #       Just make sure that it's the same type of tag.
             return self.tag == other.tag
+
+
+class PressETree():
+    """docstring for PressETree"""
+    def __init__(self, root):
+        self.current_node = root
+        self.next_node = None
+
+    def parse(self, key, val):
+        # if val is a string
+            # insert text into current node
+        # if val is an array
+            # handle children # pass-in the children array? and tag name?
+        if isinstance(val, str):
+            self.current_node.insert_text(val) # handle_characters()
+        else: # is a list
+            # add a bool flag or insert children into current node
+            for item in val:
+                import pdb; pdb.set_trace()
+
+
+        # if key is a tag
+            # handle new tag
+        # if key is an attribute
+            # insert attr to current node
+        if key.startswith('#'):  # is a tag
+            self.handle_new_tag(key.strip('#'))
+        elif key.startswith('@'):  # is an attribute
+            self.current_node.attrs[key] = val
+
+    def handle_new_tag(self, tag):
+        # create a new PressElement
+        # copy over info from current node to the new node
+        # set next node
+        # replace the current node node's position in its parent's children
+        # change the current node to the new one
+        new_elem = PressElement(tag)
+        new_node.parent = self.current_node
+        new_node.children = self.current_node.children
+
+        self.current_node.parent.children.pop()
+        self.current_node.parent.children.append(new_node)
+
+        self.current_node = new_node
+
+    def handle_children(self, children):
+        # get length of array
+            # loop from 0 to array length, keeping track of index
+                # for each child,..... call parse?
+        for child in children:
+            import pdb; pdb.set_trace()
+            for key, val in child:
+                self.parse(key, val)
+
+
+def parse_dict_as_press_etree(dtree):
+    root_node = PressElement('root')
+    press_etree = PressETree(root_node)
+
+    for key, val in dtree.items():
+        # import pdb; pdb.set_trace()
+        press_etree.parse(key, val)
+    return root_node
+
+# tree = PressETree({'#cool': 'yes'}).dict_to_tree()
+parse_dict_as_press_etree(dtree)
