@@ -10,7 +10,10 @@ def test_string_representation():
                            attrs=attrs)
 
     assert repr(element) == expected
+
+    assert repr(PressElement('tagname')) == '<tagname></tagname>'
     assert str(PressElement('tagname')) == '<tagname></tagname>'
+    assert str(PressElement('tagname', text='Yes')) == '<tagname>Yes</tagname>'
 
 
 def test_tree_behavior():

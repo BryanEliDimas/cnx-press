@@ -53,7 +53,7 @@ class PressElement:
 
     """Make it a tree"""
     def add_child(self, child):
-        """Works like append for XML ElementTree-s."""
+        # Works like append for XML ElementTree-s
         child.parent = self
         self.children.append(child)
 
@@ -81,7 +81,8 @@ class PressElement:
 
     def requires_major_version_update(self, other):
         """Answers the questions:
-        - Has the order of any of the modules changed?
+        - Have any modules been added or removed?
+        - Has the order of any of the ~modules~ elements changed?
         - Did the title of any of the modules change?
         """
         if self.tag == 'title' and other.tag == 'title':
@@ -94,5 +95,5 @@ class PressElement:
                 return True
         else:
             # NOTE: Ignores attributes.
-            #       Just make sure that it's the same type tag.
+            #       Just make sure that it's the same type of tag.
             return self.tag == other.tag
